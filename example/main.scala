@@ -2,12 +2,12 @@
 import org.bargsten.valacc.*
 import org.bargsten.valacc.syntax.*
 
-opaque type ZipCode = String
+opaque type PostCode = String
 
-object ZipCode:
+object PostCode:
   private val Pattern = """^(\d{4})\s*([A-Za-z]{2})$""".r
 
-  def parse(v: String): Validated[String, ZipCode] = validated[String, ZipCode]:
+  def parse(v: String): Validated[String, PostCode] = validated[String, PostCode]:
     val trimmed = v.trim
     demand(trimmed.nonEmpty)("zip code must not be empty")
     val m = demandDefined(Pattern.findFirstMatchIn(trimmed))("zip code must match format '1234AB'")
@@ -19,17 +19,17 @@ object ZipCode:
     )
     s"$digits $letters"
 
-  def fromUnsafe(v: String): ZipCode =
-    parse(v).getOrElse(throw IllegalArgumentException(s"invalid Dutch zip code: '$v'"))
+  def fromUnsafe(v: String): PostCode = v
 
-  extension (zc: ZipCode) def value: String = zc
+  extension (zc: PostCode) def unwrap: String = zc
 
 @main
 def main() =
+  // check some Dutch postcodes
   val examples = List("1234AB", "  2511 dp ", "0999ZZ", "1234SA", "0500SA", "", "bogus", "1234 HX")
   examples.foreach: input =>
     println(s"input: '$input'")
-    ZipCode.parse(input) match
+    PostCode.parse(input) match
       case Valid(res)    => println(s"  postcode is $res")
       case Invalid(errs) => errs.toList.foreach(err => println(s"  ERROR: $err"))
   // :xns
