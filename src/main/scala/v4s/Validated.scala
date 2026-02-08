@@ -6,9 +6,25 @@ sealed trait Validated[+E, +A]:
   def isValid: Boolean
   def isInvalid: Boolean = !isValid
 
-  def fold[B](onValid: A => B, onInvalid: NonEmptyList[E] => B): B = this match
-    case Valid(a)       => onValid(a)
-    case Invalid(errors) => onInvalid(errors)
+  def contains[A2 >: A](elem: A2): Boolean = this match
+    case Valid(a) => a == elem
+    case _        => false
+
+  def exists(p: A => Boolean): Boolean = this match
+    case Valid(a) => p(a)
+    case _        => false
+
+  def forall(p: A => Boolean): Boolean = this match
+    case Valid(a) => p(a)
+    case _        => true
+
+  def foreach(f: A => Unit): Unit = this match
+    case Valid(a) => f(a)
+    case _        =>
+
+  def fold[B](fe: NonEmptyList[E] => B, fa: A => B): B = this match
+    case Valid(a)        => fa(a)
+    case Invalid(errors) => fe(errors)
 
   def map[B](f: A => B): Validated[E, B] = this match
     case Valid(a)        => Valid(f(a))
@@ -16,6 +32,10 @@ sealed trait Validated[+E, +A]:
 
   def flatMap[E2 >: E, B](f: A => Validated[E2, B]): Validated[E2, B] = this match
     case Valid(a)        => f(a)
+    case inv: Invalid[E] => inv
+
+  def filterOrElse[E2 >: E](p: A => Boolean, error: => E2): Validated[E2, A] = this match
+    case v @ Valid(a)    => if p(a) then v else Invalid(NonEmptyList.one(error))
     case inv: Invalid[E] => inv
 
   def mapErrors[F](f: NonEmptyList[E] => NonEmptyList[F]): Validated[F, A] = this match
@@ -45,6 +65,10 @@ sealed trait Validated[+E, +A]:
   def toEither: Either[NonEmptyList[E], A] = this match
     case Valid(a)        => Right(a)
     case Invalid(errors) => Left(errors)
+
+  def swap: Validated[A, NonEmptyList[E]] = this match
+    case Valid(a)        => Invalid(NonEmptyList.one(a))
+    case Invalid(errors) => Valid(errors)
 
   def tap(f: A => Unit): Validated[E, A] =
     this match

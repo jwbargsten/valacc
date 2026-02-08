@@ -9,11 +9,6 @@ class ValidationScope[E]:
   private val _errors = ListBuffer.empty[E]
   private val abort = new ValidationException
 
-  private[v4s] def buildUnit: Validated[E, Unit] =
-    NonEmptyList.fromList(_errors.toList) match
-      case Some(nel) => Invalid(nel)
-      case None      => Valid(())
-
   private[v4s] def build[A](value: A): Validated[E, A] =
     NonEmptyList.fromList(_errors.toList) match
       case Some(nel) => Invalid(nel)
@@ -101,10 +96,10 @@ def validate[E](block: ValidationScope[E] ?=> Unit): Validated[E, Unit] =
   val scope = new ValidationScope[E]
   try
     block(using scope)
-    scope.buildUnit
+    scope.build(())
   catch
     case t: ValidationException if scope.isOurException(t) =>
-      scope.buildUnit
+      scope.build(())
 
 def validated[E, A](block: ValidationScope[E] ?=> A): Validated[E, A] =
   val scope = new ValidationScope[E]
@@ -113,7 +108,7 @@ def validated[E, A](block: ValidationScope[E] ?=> A): Validated[E, A] =
     scope.build(result)
   catch
     case t: ValidationException if scope.isOurException(t) =>
-      scope.buildUnit.asInstanceOf[Validated[E, A]]
+      scope.build(()).asInstanceOf[Validated[E, A]]
 
 // --- top-level DSL functions (delegate to given scope) ---
 

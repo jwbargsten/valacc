@@ -22,6 +22,30 @@ class ValidatedSuite extends munit.FunSuite:
     assert(!invalidPokemon.isValid)
     assert(invalidPokemon.isInvalid)
 
+  test("contains"):
+    assert(validPokemon.contains(Pokemon(25, "Pikachu", 50)))
+    assert(!validPokemon.contains(Pokemon(0, "MissingNo", 0)))
+    assert(!invalidPokemon.contains(Pokemon(25, "Pikachu", 50)))
+
+  test("exists"):
+    assert(validPokemon.exists(_.level == 50))
+    assert(!validPokemon.exists(_.level == 1))
+    assert(!invalidPokemon.exists(_ => true))
+
+  test("forall"):
+    assert(validPokemon.forall(_.level == 50))
+    assert(!validPokemon.forall(_.level == 1))
+    assert(invalidPokemon.forall(_ => false))
+
+  test("foreach"):
+    var captured: Option[Pokemon] = None
+    validPokemon.foreach(p => captured = Some(p))
+    assertEquals(captured, Some(Pokemon(25, "Pikachu", 50)))
+
+    var called = false
+    invalidPokemon.foreach(_ => called = true)
+    assert(!called)
+
   test("tap executes on valid only"):
     var captured: Option[Pokemon] = None
     validPokemon.tap(p => captured = Some(p))
@@ -45,10 +69,10 @@ class ValidatedSuite extends munit.FunSuite:
     assertEquals(invalidPokemon.orElse(valid(Pokemon(151, "Mew", 50))), valid(Pokemon(151, "Mew", 50)))
 
   test("fold"):
-    val res = valid(Pokemon(143, "Snorlax", 30)).fold(_.name, _ => "Error")
+    val res = valid(Pokemon(143, "Snorlax", 30)).fold(_ => "Error", _.name)
     assertEquals(res, "Snorlax")
 
-    val res2 = Invalid(NonEmptyList.of("E1", "E2")).fold(_ => "ok", _.toList.mkString(", "))
+    val res2 = Invalid(NonEmptyList.of("E1", "E2")).fold(_.toList.mkString(", "), _ => "ok")
     assertEquals(res2, "E1, E2")
 
   test("toOption"):
@@ -58,6 +82,13 @@ class ValidatedSuite extends munit.FunSuite:
   test("toEither"):
     assertEquals(validPokemon.toEither, Right(Pokemon(25, "Pikachu", 50)))
     assertEquals(invalidPokemon.toEither, Left(NonEmptyList.one("Pokemon fainted")))
+
+  test("swap valid becomes invalid"):
+    assertEquals(valid(42).swap, Invalid(NonEmptyList.one(42)))
+
+  test("swap invalid becomes valid"):
+    val errors = NonEmptyList.of("e1", "e2")
+    assertEquals(Invalid(errors).swap, Valid(errors))
 
   // --- map / flatMap / mapErrors / recover ---
 
@@ -80,6 +111,15 @@ class ValidatedSuite extends munit.FunSuite:
 
   test("flatMap on invalid returns invalid"):
     assert(invalidPokemon.flatMap(p => valid(p.name)).isInvalid)
+
+  test("filterOrElse keeps valid when predicate passes"):
+    assertEquals(validPokemon.filterOrElse(_.level > 10, "too low"), validPokemon)
+
+  test("filterOrElse rejects valid when predicate fails"):
+    assertEquals(validPokemon.filterOrElse(_.level > 100, "too low"), invalidOne("too low"))
+
+  test("filterOrElse on invalid returns invalid"):
+    assertEquals(invalidPokemon.filterOrElse(_ => true, "irrelevant"), invalidPokemon)
 
   test("mapErrors transforms errors"):
     val inv: Validated[String, Int] = Invalid(NonEmptyList.of("low hp", "poisoned"))
