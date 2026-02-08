@@ -64,9 +64,3 @@ sbt console   # REPL
 ## Release Strategy
 
 We use [Early SemVer](https://www.scala-lang.org/blog/2021/02/16/preventing-version-conflicts-with-versionscheme.html#early-semver-and-sbt-version-policy)
-
-## References
-
-- [FSRS Algorithm Wiki](https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm)
-- [Technical explanation of FSRS](https://expertium.github.io/Algorithm.html)
-- [Anki FSRS Deck Options](https://docs.ankiweb.net/deck-options.html#fsrs)
