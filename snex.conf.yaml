@@ -1,0 +1,15 @@
+default:
+  comment_prefix: "// "
+  output_path: snippets
+  snippet_start: ":snx"
+  snippet_end: ":xns"
+  output_template: |
+    ```{{lang}}
+    {{{snippet}}}
+    ```
+src:
+  lang: scala
+  pathspec: ["/**/*.scala"]
+sbt:
+  lang: scala
+  pathspec: ["build.sbt"]

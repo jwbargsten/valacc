@@ -1,7 +1,7 @@
-package v4s
+package org.bargsten.valacc
 
 import cats.data.NonEmptyList
-import v4s.Validated.*
+import org.bargsten.valacc.syntax.*
 
 class ValidationScopeSuite extends munit.FunSuite:
 

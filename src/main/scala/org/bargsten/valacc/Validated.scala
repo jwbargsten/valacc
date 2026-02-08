@@ -1,4 +1,4 @@
-package v4s
+package org.bargsten.valacc
 
 import cats.data.NonEmptyList
 

@@ -1,21 +1,21 @@
-package v4s
+package org.bargsten.valacc
 
 import cats.data.NonEmptyList
 import scala.collection.mutable.ListBuffer
 
-private[v4s] class ValidationException extends Exception with scala.util.control.NoStackTrace
+private[valacc] class ValidationException extends Exception with scala.util.control.NoStackTrace
 
 class ValidationScope[E]:
   private val _errors = ListBuffer.empty[E]
   private val abort = new ValidationException
 
-  private[v4s] def build[A](value: A): Validated[E, A] =
+  private[valacc] def build[A](value: A): Validated[E, A] =
     NonEmptyList.fromList(_errors.toList) match
       case Some(nel) => Invalid(nel)
       case None      => Valid(value)
 
-  private[v4s] def shortcircuit(): Nothing = throw abort
-  private[v4s] def isOurException(t: Throwable): Boolean = t eq abort
+  private[valacc] def shortcircuit(): Nothing = throw abort
+  private[valacc] def isOurException(t: Throwable): Boolean = t eq abort
 
   // --- accumulating ---
 
@@ -90,54 +90,22 @@ class ValidationScope[E]:
         shortcircuit()
       value
 
-// --- builder functions ---
-
-def validate[E](block: ValidationScope[E] ?=> Unit): Validated[E, Unit] =
-  val scope = new ValidationScope[E]
-  try
-    block(using scope)
-    scope.build(())
-  catch
-    case t: ValidationException if scope.isOurException(t) =>
+object ValidationScope:
+  def validate[E](block: ValidationScope[E] ?=> Unit): Validated[E, Unit] =
+    val scope = new ValidationScope[E]
+    try
+      block(using scope)
       scope.build(())
+    catch
+      case t: ValidationException if scope.isOurException(t) =>
+        scope.build(())
 
-def validated[E, A](block: ValidationScope[E] ?=> A): Validated[E, A] =
-  val scope = new ValidationScope[E]
-  try
-    val result = block(using scope)
-    scope.build(result)
-  catch
-    case t: ValidationException if scope.isOurException(t) =>
-      scope.build(()).asInstanceOf[Validated[E, A]]
+  def validated[E, A](block: ValidationScope[E] ?=> A): Validated[E, A] =
+    val scope = new ValidationScope[E]
+    try
+      val result = block(using scope)
+      scope.build(result)
+    catch
+      case t: ValidationException if scope.isOurException(t) =>
+        scope.build(()).asInstanceOf[Validated[E, A]]
 
-// --- top-level DSL functions (delegate to given scope) ---
-
-def ensure[E](predicate: Boolean)(error: => E)(using s: ValidationScope[E]): Unit =
-  s.ensure(predicate)(error)
-
-def ensureFail[E](error: => E)(using s: ValidationScope[E]): Unit =
-  s.ensureFail(error)
-
-def ensureDefined[E, A](option: Option[A])(error: => E)(using s: ValidationScope[E]): Option[A] =
-  s.ensureDefined(option)(error)
-
-def ensureValue[E, A](validated: Validated[E, A])(using s: ValidationScope[E]): Option[A] =
-  s.ensureValue(validated)
-
-def demand[E](predicate: Boolean)(error: => E)(using s: ValidationScope[E]): Unit =
-  s.demand(predicate)(error)
-
-def demandFail[E](error: => E)(using s: ValidationScope[E]): Nothing =
-  s.demandFail(error)
-
-def demandDefined[E, A](option: Option[A])(error: => E)(using s: ValidationScope[E]): A =
-  s.demandDefined(option)(error)
-
-def demandValue[E, A](validated: Validated[E, A])(using s: ValidationScope[E]): A =
-  s.demandValue(validated)
-
-def demandValid[E](validated: Validated[E, ?])(using s: ValidationScope[E]): Unit =
-  s.demandValid(validated)
-
-def attach[E, A](validated: Validated[E, A])(using s: ValidationScope[E]): Validated[E, A] =
-  s.attach(validated)
