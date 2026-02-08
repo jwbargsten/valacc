@@ -84,17 +84,24 @@ sealed trait Validated[+E, +A]:
 
   def zip[E2 >: E, B, C](other: Validated[E2, B])(f: (A, B) => C): Validated[E2, C] =
     (this, other) match
-      case (Valid(a), Valid(b))           => Valid(f(a, b))
-      case (Invalid(e1), Invalid(e2))    => Invalid(e1 ::: e2)
-      case (inv: Invalid[E2], _)         => inv
-      case (_, inv: Invalid[E2])         => inv
+      case (Valid(a), Valid(b))       => Valid(f(a, b))
+      case (Invalid(e1), Invalid(e2)) => Invalid(e1 ::: e2)
+      case (inv: Invalid[E2], _)      => inv
+      case (_, inv: Invalid[E2])      => inv
 
   def zip[E2 >: E](other: Validated[E2, ?]): Validated[E2, A] =
     (this, other) match
-      case (Valid(a), Valid(_))           => Valid(a)
-      case (Invalid(e1), Invalid(e2))    => Invalid(e1 ::: e2)
-      case (inv: Invalid[E2], _)         => inv
-      case (_, Invalid(e2))              => Invalid(e2)
+      case (Valid(a), Valid(_))       => Valid(a)
+      case (Invalid(e1), Invalid(e2)) => Invalid(e1 ::: e2)
+      case (inv: Invalid[E2], _)      => inv
+      case (_, Invalid(e2))           => Invalid(e2)
+
+  def toCats: cats.data.Validated[NonEmptyList[E], A] =
+    this match
+      case Valid(v)      => cats.data.Validated.Valid(v)
+      case Invalid(errs) => cats.data.Validated.Invalid(errs)
+
+end Validated
 
 final case class Valid[+A](value: A) extends Validated[Nothing, A]:
   def isValid = true
@@ -130,7 +137,7 @@ object Validated:
       val values = List.newBuilder[A]
       val errors = List.newBuilder[E]
       list.foreach:
-        case Valid(a)   => values += a
+        case Valid(a)    => values += a
         case Invalid(es) => errors ++= es.toList
       val errs = errors.result()
       NonEmptyList.fromList(errs) match
