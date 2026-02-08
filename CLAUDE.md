@@ -4,18 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & Test
 
-Scala 3.3.4 project using sbt 1.10.6. Tests use munit.
+Scala 3.8.1 project using sbt 1.11.0. Tests use munit.
 
 ```bash
 sbt compile        # compile
 sbt test           # run all tests
-sbt "testOnly v4s.ValidatedSuite"       # run a single test suite
-sbt "testOnly v4s.ValidatedSuite -- *zip*"  # run tests matching a pattern
+sbt "testOnly org.bargsten.valacc.ValidatedSuite"       # run a single test suite
+sbt "testOnly org.bargsten.valacc.ValidatedSuite -- *zip*"  # run tests matching a pattern
 ```
 
 ## Architecture
 
-v4s is a validation library providing error accumulation with optional short-circuiting. Single package `v4s`, single dependency: cats-core (for `NonEmptyList`).
+valacc is a validation library providing error accumulation with optional short-circuiting. Single package `org.bargsten.valacc`, single dependency: cats-core (for `NonEmptyList`).
 
 ### Core types (`Validated.scala`)
 
@@ -27,9 +27,13 @@ v4s is a validation library providing error accumulation with optional short-cir
 - **`ensure*`** — accumulating: adds errors but continues execution.
 - **`demand*`** — short-circuiting: adds error and aborts via a scope-local exception.
 
-Builder functions `validate[E]` (returns `Validated[E, Unit]`) and `validated[E, A]` (returns `Validated[E, A]`) create a scope and run a block using Scala 3 context functions (`ValidationScope[E] ?=>`).
+Builder functions `validate[E]` (returns `Validated[E, Unit]`) and `validated[E, A]` (returns `Validated[E, A]`) live in the `ValidationScope` companion and create a scope using Scala 3 context functions (`ValidationScope[E] ?=>`).
 
-Top-level DSL functions (`ensure`, `demand`, `ensureDefined`, `demandDefined`, `ensureValue`, `demandValue`, `demandValid`, `attach`) delegate to the given `ValidationScope`. Extension methods on scope provide `.get`, `.attachV()`, `value.ensure(pred)(err)`, `value.demand(pred)(err)`.
+### DSL entry point (`syntax.scala`)
+
+`syntax` object provides top-level DSL functions (`ensure`, `demand`, `ensureDefined`, `demandDefined`, `ensureValue`, `demandValue`, `demandValid`, `attach`) that delegate to the given `ValidationScope`. Also re-exports `Validated.*` and `ValidationScope.*` via `export`. Import `org.bargsten.valacc.syntax.*` to get the full DSL.
+
+Extension methods on `ValidationScope` provide `.get`, `.attachV()`, `value.ensure(pred)(err)`, `value.demand(pred)(err)`.
 
 ### Conversions (`conversions.scala`)
 
