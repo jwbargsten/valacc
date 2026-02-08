@@ -115,6 +115,12 @@ class ValidationScopeSuite extends munit.FunSuite:
       demandValid(valid(42))
     assertEquals(result, Validated.unit)
 
+  test("get without attach"):
+    val result = validated[String, String]:
+      val inv = invalidOne("error")
+      inv.get
+    assertEquals(result, invalidOne("error"))
+
   test("demandValid with invalid short-circuits"):
     var reached = false
     val result = validate[String]:

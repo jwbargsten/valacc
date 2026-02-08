@@ -1,18 +1,20 @@
 package org.bargsten.valacc
 
 import cats.data.NonEmptyList
-import scala.collection.mutable.ListBuffer
+import org.slf4j.LoggerFactory
 
-private[valacc] class ValidationException extends Exception with scala.util.control.NoStackTrace
+import scala.annotation.targetName
+import scala.collection.mutable.ListBuffer
+import scala.util.control.NoStackTrace
+
+private[valacc] class ValidationException extends Exception, NoStackTrace
 
 class ValidationScope[E]:
+  private val logger = LoggerFactory.getLogger(getClass)
   private val _errors = ListBuffer.empty[E]
-  private val abort = new ValidationException
+  private val abort = ValidationException()
 
-  private[valacc] def build[A](value: A): Validated[E, A] =
-    NonEmptyList.fromList(_errors.toList) match
-      case Some(nel) => Invalid(nel)
-      case None      => Valid(value)
+  def errors: Option[NonEmptyList[E]] = NonEmptyList.fromList(_errors.toList)
 
   private[valacc] def shortcircuit(): Nothing = throw abort
   private[valacc] def isOurException(t: Throwable): Boolean = t eq abort
@@ -74,8 +76,12 @@ class ValidationScope[E]:
 
   extension [A](validated: Validated[E, A])
     def get: A = validated match
-      case Valid(a)      => a
-      case _: Invalid[?] => shortcircuit()
+      case Valid(a) => a
+      case Invalid(errors) =>
+        if (_errors.isEmpty)
+          _errors ++= errors.toList
+          logger.error("get called on an Invalid instance. Did you forget to attach the error in the current scope?")
+        shortcircuit()
 
     def attachV(): Validated[E, A] = attach(validated)
 
@@ -96,16 +102,24 @@ object ValidationScope:
     val scope = new ValidationScope[E]
     try
       block(using scope)
-      scope.build(())
+      scope.errors match
+        case Some(errs) => Invalid(errs)
+        case None       => Valid(())
     catch
       case t: ValidationException if scope.isOurException(t) =>
-        scope.build(())
+        scope.errors match
+          case Some(errs) => Invalid(errs)
+          case None       => Valid(())
 
   def validated[E, A](block: ValidationScope[E] ?=> A): Validated[E, A] =
     val scope = new ValidationScope[E]
     try
       val result = block(using scope)
-      scope.build(result)
+      scope.errors match
+        case Some(errs) => Invalid(errs)
+        case None       => Valid(result)
     catch
       case t: ValidationException if scope.isOurException(t) =>
-        scope.build(()).asInstanceOf[Validated[E, A]]
+        scope.errors match
+          case Some(errs) => Invalid(errs)
+          case None       => throw AssertionError("assertion failed: caught ValidationException, but no errors")
