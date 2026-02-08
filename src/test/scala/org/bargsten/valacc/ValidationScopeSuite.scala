@@ -218,3 +218,4 @@ class ValidationScopeSuite extends munit.FunSuite:
       val other = attach(Invalid(NonEmptyList.of("e2", "e3")))
       other.get
     assertEquals(result, Invalid(NonEmptyList.of("e1", "e2", "e3")))
+end ValidationScopeSuite
