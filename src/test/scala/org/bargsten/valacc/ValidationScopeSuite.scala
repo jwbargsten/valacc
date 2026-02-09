@@ -15,6 +15,22 @@ class ValidationScopeSuite extends munit.FunSuite:
     val result = validate[String] { ensure(false) { "bad" } }
     assertEquals(result, invalidOne("bad"))
 
+  test("ensure with false adds no duplicate errors (demand)"):
+    val result = validate[String] {
+      val v = invalidOne("bad")
+      attach(v)
+      demandValue(v)
+    }
+    assertEquals(result, invalidOne("bad"))
+
+  test("ensure with false adds no duplicate errors (get)"):
+    val result = validate[String] {
+      val v = invalidOne("bad")
+      attach(v)
+      v.get
+    }
+    assertEquals(result, invalidOne("bad"))
+
   test("multiple ensures accumulate"):
     val result = validate[String]:
       ensure(false) { "e1" }

@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory
 import scala.annotation.targetName
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NoStackTrace
+import scala.jdk.CollectionConverters.*
 
 private[valacc] class ValidationException extends Exception, NoStackTrace
 
@@ -14,7 +15,7 @@ class ValidationScope[E]:
   private val _errors = ListBuffer.empty[E]
   private val abort = ValidationException()
 
-  def errors: Option[NonEmptyList[E]] = NonEmptyList.fromList(_errors.toList)
+  def errors: Option[NonEmptyList[E]] = NonEmptyList.fromList(_errors.distinct.toList)
 
   private[valacc] def shortcircuit(): Nothing = throw abort
   private[valacc] def isOurException(t: Throwable): Boolean = t eq abort
@@ -75,13 +76,7 @@ class ValidationScope[E]:
   // --- extensions available via given scope ---
 
   extension [A](validated: Validated[E, A])
-    def get: A = validated match
-      case Valid(a) => a
-      case Invalid(errors) =>
-        if (_errors.isEmpty)
-          _errors ++= errors.toList
-          logger.error("get called on an Invalid instance. Did you forget to attach the error in the current scope?")
-        shortcircuit()
+    def get: A = demandValue(validated)
 
     def attachV(): Validated[E, A] = attach(validated)
 
