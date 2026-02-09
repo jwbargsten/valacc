@@ -1,7 +1,6 @@
 package org.bargsten.valacc
 
 import cats.data.NonEmptyList
-import org.slf4j.LoggerFactory
 
 import scala.annotation.targetName
 import scala.collection.mutable.ListBuffer
@@ -11,7 +10,6 @@ import scala.jdk.CollectionConverters.*
 private[valacc] class ValidationException extends Exception, NoStackTrace
 
 class ValidationScope[E]:
-  private val logger = LoggerFactory.getLogger(getClass)
   private val _errors = ListBuffer.empty[E]
   private val abort = ValidationException()
 

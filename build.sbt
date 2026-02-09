@@ -37,7 +37,6 @@ lazy val root = project
     scalaVersion := scalacVersion,
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "2.13.0",
-      "org.slf4j" % "slf4j-api" % "2.0.17",
       "org.scalameta" %% "munit"     % "1.2.2" % Test,
     ),
   )
