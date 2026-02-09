@@ -78,7 +78,8 @@ class ValidationScope[E]:
   extension [A](validated: Validated[E, A])
     def get: A = demandValue(validated)
 
-    def attachV(): Validated[E, A] = attach(validated)
+    @targetName("attachFluent")
+    def attach(): Validated[E, A] = this.attach(validated)
 
   extension [A](value: A)
     def ensure(predicate: A => Boolean)(error: => E): A =

@@ -177,9 +177,9 @@ class ValidationScopeSuite extends munit.FunSuite:
     assertEquals(result, invalidOne("bad"))
     assert(!reached)
 
-  test("fluent .attachV()"):
+  test("fluent .attach()"):
     val result = validate[String]:
-      invalidOne[String]("err").attachV()
+      invalidOne[String]("err").attach()
       ()
     assertEquals(result, invalidOne("err"))
 
