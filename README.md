@@ -7,9 +7,9 @@ Scala 3 accumulative validation lib
 <!-- include example/project.scala::dependencies -->
 ```scala
 // Scala CLI
-//> using dep org.bargsten::valacc:0.0.5
+//> using dep org.bargsten::valacc:0.1.0
 // sbt
-// "org.bargsten" %% "valacc" % "0.0.5"
+// "org.bargsten" %% "valacc" % "0.1.0"
 ```
 <!-- endinclude -->
 

@@ -5,7 +5,6 @@ import cats.data.NonEmptyList
 import scala.annotation.targetName
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NoStackTrace
-import scala.jdk.CollectionConverters.*
 
 private[valacc] class ValidationException extends Exception, NoStackTrace
 
@@ -13,7 +12,7 @@ class ValidationScope[E]:
   private val _errors = ListBuffer.empty[E]
   private val abort = ValidationException()
 
-  def errors: Option[NonEmptyList[E]] = NonEmptyList.fromList(_errors.distinct.toList)
+  def errors: Option[NonEmptyList[E]] = NonEmptyList.fromList(_errors.toList)
 
   private[valacc] def shortcircuit(): Nothing = throw abort
   private[valacc] def isOurException(t: Throwable): Boolean = t eq abort
@@ -73,8 +72,17 @@ class ValidationScope[E]:
 
   // --- extensions available via given scope ---
 
+  private def addMissingErrors(xs: NonEmptyList[E]) =
+    val seen = new java.util.IdentityHashMap[E, Boolean]()
+    _errors.foreach(e => seen.put(e, true))
+    _errors ++= xs.filter(x => !seen.containsKey(x))
+
   extension [A](validated: Validated[E, A])
-    def get: A = demandValue(validated)
+    def get: A = validated match
+      case Valid(a) => a
+      case Invalid(errors) =>
+        addMissingErrors(errors)
+        shortcircuit()
 
     @targetName("attachFluent")
     def attach(): Validated[E, A] = this.attach(validated)
@@ -103,9 +111,9 @@ object ValidationScope:
       case t: ValidationException if scope.isOurException(t) =>
         scope.errors match
           case Some(errs) => Invalid(errs)
-          case None       => Valid(())
+          case None       => throw AssertionError("assertion failed: caught ValidationException, but no errors")
 
-  def validated[E, A](block: ValidationScope[E] ?=> A): Validated[E, A] =
+  def validateWithResult[E, A](block: ValidationScope[E] ?=> A): Validated[E, A] =
     val scope = new ValidationScope[E]
     try
       val result = block(using scope)

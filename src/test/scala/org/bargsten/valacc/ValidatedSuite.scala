@@ -177,21 +177,21 @@ class ValidatedSuite extends munit.FunSuite:
   test("zip two valids with function"):
     val p1 = valid(Pokemon(25, "Pikachu", 50))
     val p2 = valid(Pokemon(26, "Raichu", 60))
-    assertEquals(p1.zipLeft(p2)((a, b) => s"${a.name} evolves to ${b.name}"), valid("Pikachu evolves to Raichu"))
+    assertEquals(p1.zip(p2)((a, b) => s"${a.name} evolves to ${b.name}"), valid("Pikachu evolves to Raichu"))
 
   test("zip accumulates errors from both invalids"):
     val i1: Validated[String, Int] = Invalid(NonEmptyList.of("e1", "e2"))
     val i2: Validated[String, Int] = Invalid(NonEmptyList.of("e3"))
-    assertEquals(i1.zipLeft(i2)(_ + _), Invalid(NonEmptyList.of("e1", "e2", "e3")))
+    assertEquals(i1.zip(i2)(_ + _), Invalid(NonEmptyList.of("e1", "e2", "e3")))
 
   test("zip valid with invalid returns invalid"):
     val v = valid(1)
     val i: Validated[String, Int] = invalidOne("err")
-    assertEquals(v.zipLeft(i)(_ + _), invalidOne("err"))
-    assertEquals(i.zipLeft(v)(_ + _), invalidOne("err"))
+    assertEquals(v.zip(i)(_ + _), invalidOne("err"))
+    assertEquals(i.zip(v)(_ + _), invalidOne("err"))
 
   test("zip without function keeps left value"):
-    assertEquals(valid(7).zipLeft(valid(9)), valid(7))
+    assertEquals(valid(7).zip(valid(9)), valid(7))
 
   // --- sequence ---
 

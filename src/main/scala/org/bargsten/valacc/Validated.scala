@@ -82,14 +82,14 @@ sealed trait Validated[+E, +A]:
       case _               =>
     this
 
-  def zipLeft[E2 >: E, B, C](other: Validated[E2, B])(f: (A, B) => C): Validated[E2, C] =
+  def zip[E2 >: E, B, C](other: Validated[E2, B])(f: (A, B) => C): Validated[E2, C] =
     (this, other) match
       case (Valid(a), Valid(b))       => Valid(f(a, b))
       case (Invalid(e1), Invalid(e2)) => Invalid(e1 ::: e2)
       case (inv: Invalid[E2], _)      => inv
       case (_, inv: Invalid[E2])      => inv
 
-  def zipLeft[E2 >: E](other: Validated[E2, ?]): Validated[E2, A] =
+  def zip[E2 >: E](other: Validated[E2, ?]): Validated[E2, A] =
     (this, other) match
       case (Valid(a), Valid(_))       => Valid(a)
       case (Invalid(e1), Invalid(e2)) => Invalid(e1 ::: e2)
