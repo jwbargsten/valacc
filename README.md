@@ -53,6 +53,8 @@ def main() =
 ```
 <!-- endinclude -->
 
+**NOTE**: `Validated` is an alias for the `Validated` from Cats: `type Validated[+E, +A] = cats.data.Validated[NonEmptyList[E], A]`
+
 ## The Validation Scope
 
 Validation scopes are code blocks wrapped in:
@@ -226,6 +228,7 @@ class Routes(repo: Repository):
 - The validation scope is not thread-safe.
 - Calling `.get` in a validation scope will add the errors of the validation object if
   not added previously with `attach`.
+- `Validated` is an alias for the `Validated` from Cats: `type Validated[+E, +A] = cats.data.Validated[NonEmptyList[E], A]`
 
 ## Build
 

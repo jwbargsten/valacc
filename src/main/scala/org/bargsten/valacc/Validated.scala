@@ -71,3 +71,4 @@ object Validated:
       NonEmptyList.fromList(errs) match
         case Some(nel) => Invalid(nel)
         case None      => Valid(values.result())
+end Validated
