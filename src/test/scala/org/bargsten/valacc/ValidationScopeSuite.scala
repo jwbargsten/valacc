@@ -9,7 +9,7 @@ class ValidationScopeSuite extends munit.FunSuite:
 
   test("ensure with true adds no error"):
     val result = validate[String] { ensure(true) { "nope" } }
-    assertEquals(result, Validated.unit)
+    assertEquals(result, ValAcc.unit)
 
   test("ensure with false adds error"):
     val result = validate[String] { ensure(false) { "bad" } }
@@ -129,7 +129,7 @@ class ValidationScopeSuite extends munit.FunSuite:
   test("demandValid with valid continues"):
     val result = validate[String]:
       demandValid(valid(42))
-    assertEquals(result, Validated.unit)
+    assertEquals(result, ValAcc.unit)
 
   test("get without attach"):
     val result = validateWithResult[String, String]:
@@ -211,7 +211,7 @@ class ValidationScopeSuite extends munit.FunSuite:
 
   test("validate with no errors returns unit"):
     val result = validate[String] { ensure(true) { "x" } }
-    assertEquals(result, Validated.unit)
+    assertEquals(result, ValAcc.unit)
 
   test("validated returns wrapped value on success"):
     val result = validateWithResult[String, Int]:

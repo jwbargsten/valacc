@@ -1,7 +1,9 @@
 package org.bargsten.valacc
 
-import cats.data.NonEmptyList
+import cats.data.Validated.{Invalid, Valid}
+import cats.data.{NonEmptyList, Validated}
 
+/*
 sealed trait Validated[+E, +A]:
   def isValid: Boolean
   def isInvalid: Boolean = !isValid
@@ -109,34 +111,39 @@ final case class Valid[+A](value: A) extends Validated[Nothing, A]:
 final case class Invalid[+E](errors: NonEmptyList[E]) extends Validated[E, Nothing]:
   def isValid = false
 
-object Validated:
+ */
+
+object ValAcc:
   def valid[A](a: A): Validated[Nothing, A] = Valid(a)
-  def invalid[E](errors: NonEmptyList[E]): Validated[E, Nothing] = Invalid(errors)
-  def invalidOne[E](e: E): Validated[E, Nothing] = Invalid(NonEmptyList.one(e))
+  def invalid[E](errors: NonEmptyList[E]): Validated[NonEmptyList[E], Nothing] = Invalid(errors)
+  def invalidOne[E](e: E): Validated[NonEmptyList[E], Nothing] = Invalid(NonEmptyList.one(e))
   val unit: Validated[Nothing, Unit] = Valid(())
 
-  def fromOption[E, A](opt: Option[A])(error: => E): Validated[E, A] = opt match
+  def fromOption[E, A](opt: Option[A])(error: => E): Validated[NonEmptyList[E], A] = opt match
     case Some(a) => Valid(a)
     case None    => invalidOne(error)
 
-  def fromEither[E, A](either: Either[E, A]): Validated[E, A] = either match
+  def fromEither[E, A](either: Either[E, A]): Validated[NonEmptyList[E], A] = either match
     case Right(a) => Valid(a)
     case Left(e)  => invalidOne(e)
 
-  def fromTry[A](t: scala.util.Try[A]): Validated[Throwable, A] = t match
+  def fromTry[A](t: scala.util.Try[A]): Validated[NonEmptyList[Throwable], A] = t match
     case scala.util.Success(a) => Valid(a)
     case scala.util.Failure(e) => invalidOne(e)
 
-  def cond[E, A](test: Boolean, a: => A, error: => E): Validated[E, A] =
+  def cond[E, A](test: Boolean, a: => A, error: => E): Validated[NonEmptyList[E], A] =
     if test then Valid(a) else invalidOne(error)
 
-  def validateAll[E](validations: Validated[E, ?]*): Validated[E, Unit] =
+  def validateAll[E](validations: Validated[NonEmptyList[E], ?]*): Validated[NonEmptyList[E], Unit] =
     val errors = validations.collect { case Invalid(es) => es }
     if errors.isEmpty then Valid(())
     else Invalid(errors.reduce(_ ::: _))
 
-  extension [E, A](list: List[Validated[E, A]])
-    def sequence: Validated[E, List[A]] =
+  extension [E,A](v: Validated[NonEmptyList[E], A])
+    def flatMap[B, EE >: E](f: A => Validated[NonEmptyList[EE], B]): Validated[NonEmptyList[EE], B] = v.andThen(f)
+
+  extension [E, A](list: List[Validated[NonEmptyList[E], A]])
+    def sequence: Validated[NonEmptyList[E], List[A]] =
       val values = List.newBuilder[A]
       val errors = List.newBuilder[E]
       list.foreach:

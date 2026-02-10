@@ -1,6 +1,7 @@
 package org.bargsten.valacc
 
-import cats.data.NonEmptyList
+import cats.data.Validated.{Invalid, Valid}
+import cats.data.{NonEmptyList, Validated}
 
 import scala.annotation.targetName
 import scala.collection.mutable.ListBuffer
@@ -30,12 +31,12 @@ class ValidationScope[E]:
       case some @ Some(_) => some
       case None           => _errors += error; None
 
-  def ensureValue[A](validated: Validated[E, A]): Option[A] =
+  def ensureValue[A](validated: Validated[NonEmptyList[E], A]): Option[A] =
     validated match
       case Valid(a)        => Some(a)
       case Invalid(errors) => _errors ++= errors.toList; None
 
-  def attach[A](validated: Validated[E, A]): Validated[E, A] =
+  def attach[A](validated: Validated[NonEmptyList[E], A]): Validated[NonEmptyList[E], A] =
     validated match
       case inv @ Invalid(errors) => _errors ++= errors.toList; inv
       case v                     => v
@@ -56,14 +57,14 @@ class ValidationScope[E]:
       case Some(a) => a
       case None    => _errors += error; shortcircuit()
 
-  def demandValue[A](validated: Validated[E, A]): A =
+  def demandValue[A](validated: Validated[NonEmptyList[E], A]): A =
     validated match
       case Valid(a) => a
       case Invalid(errors) =>
         _errors ++= errors.toList
         shortcircuit()
 
-  def demandValid(validated: Validated[E, ?]): Unit =
+  def demandValid(validated: Validated[NonEmptyList[E], ?]): Unit =
     validated match
       case Valid(_) => ()
       case Invalid(errors) =>
@@ -79,7 +80,7 @@ class ValidationScope[E]:
       _errors.foreach(e => seen.put(e, true))
       _errors ++= xs.filter(x => !seen.containsKey(x))
 
-  extension [A](validated: Validated[E, A])
+  extension [A](validated: Validated[NonEmptyList[E], A])
     def get: A = validated match
       case Valid(a) => a
       case Invalid(errors) =>
@@ -87,7 +88,7 @@ class ValidationScope[E]:
         shortcircuit()
 
     @targetName("attachFluent")
-    def attach(): Validated[E, A] = this.attach(validated)
+    def attach(): Validated[NonEmptyList[E], A] = this.attach(validated)
 
   extension [A](value: A)
     def ensure(predicate: A => Boolean)(error: => E): A =
@@ -102,7 +103,7 @@ class ValidationScope[E]:
 end ValidationScope
 
 object ValidationScope:
-  def validate[E](block: ValidationScope[E] ?=> Unit): Validated[E, Unit] =
+  def validate[E](block: ValidationScope[E] ?=> Unit): Validated[NonEmptyList[E], Unit] =
     val scope = new ValidationScope[E]
     try
       block(using scope)
@@ -115,7 +116,7 @@ object ValidationScope:
           case Some(errs) => Invalid(errs)
           case None       => throw AssertionError("assertion failed: caught ValidationException, but no errors")
 
-  def validateWithResult[E, A](block: ValidationScope[E] ?=> A): Validated[E, A] =
+  def validateWithResult[E, A](block: ValidationScope[E] ?=> A): Validated[NonEmptyList[E], A] =
     val scope = new ValidationScope[E]
     try
       val result = block(using scope)

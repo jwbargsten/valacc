@@ -1,12 +1,15 @@
 package org.bargsten.valacc
 
-import scala.util.{Try, Success, Failure}
+import cats.data.Validated.Valid
+import cats.data.{NonEmptyList, Validated}
+
+import scala.util.{Failure, Success, Try}
 
 extension [A](t: Try[A])
-  def toValidated: Validated[Throwable, A] = t match
+  def toValidated: Validated[NonEmptyList[Throwable], A] = t match
     case Success(a) => Valid(a)
-    case Failure(e) => Validated.invalidOne(e)
+    case Failure(e) => ValAcc.invalidOne(e)
 
-  def toValidated[E](f: Throwable => E): Validated[E, A] = t match
+  def toValidated[E](f: Throwable => E): Validated[NonEmptyList[E], A] = t match
     case Success(a) => Valid(a)
-    case Failure(e) => Validated.invalidOne(f(e))
+    case Failure(e) => ValAcc.invalidOne(f(e))
