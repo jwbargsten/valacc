@@ -73,9 +73,11 @@ class ValidationScope[E]:
   // --- extensions available via given scope ---
 
   private def addMissingErrors(xs: NonEmptyList[E]) =
-    val seen = new java.util.IdentityHashMap[E, Boolean]()
-    _errors.foreach(e => seen.put(e, true))
-    _errors ++= xs.filter(x => !seen.containsKey(x))
+    if _errors.isEmpty then _errors ++= xs.toList
+    else
+      val seen = new java.util.IdentityHashMap[E, Boolean]()
+      _errors.foreach(e => seen.put(e, true))
+      _errors ++= xs.filter(x => !seen.containsKey(x))
 
   extension [A](validated: Validated[E, A])
     def get: A = validated match
