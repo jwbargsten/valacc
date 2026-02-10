@@ -99,7 +99,7 @@ Adds error and aborts the validation scope.
 
 ## Nested validations
 
-Nested validations are handled with these functions
+Nested validations are handled with these functions.
 
 | Function                 | Returns           | Summary                                                              |
 | ------------------------ | ----------------- | -------------------------------------------------------------------- |
@@ -109,7 +109,7 @@ Nested validations are handled with these functions
 | `attach(validated)`      | `Validated[E, A]` | Adds errors from `Invalid`, returns validated as-is. Use with `.get` |
 | `validated.get`          | `value`           | Aborts if `Invalid`, unwraps value                                   |
 
-A `ValidationScope` maintains a list of erros. If you want to add the errors of a
+A `ValidationScope` maintains a list of errors. If you want to add the errors of a
 separate `Validated` object, you need to "attach" it to the scope. The short-circuit
 approach with `demandValue` is clear: add the errors and exit the scope, but for error
 accumulation it is different: attach all validations and, if needed, `.get` the values.
@@ -128,7 +128,7 @@ object CountryCode:
   val NL: CountryCode = CountryCode.fromUnsafe("NL")
 
   def parse(v: String): Validated[String, CountryCode] =
-    val sanitized = v.trim.toLowerCase
+    val sanitized = v.trim.toUpperCase
     if Codes.contains(sanitized) then valid(sanitized)
     else invalidOne(s"Country code $v is invalid")
 

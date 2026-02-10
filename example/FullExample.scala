@@ -10,7 +10,7 @@ object CountryCode:
   val NL: CountryCode = CountryCode.fromUnsafe("NL")
 
   def parse(v: String): Validated[String, CountryCode] =
-    val sanitized = v.trim.toLowerCase
+    val sanitized = v.trim.toUpperCase
     if Codes.contains(sanitized) then valid(sanitized)
     else invalidOne(s"Country code $v is invalid")
 
