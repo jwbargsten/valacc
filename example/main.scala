@@ -2,12 +2,13 @@
 import org.bargsten.valacc.*
 import org.bargsten.valacc.syntax.*
 
+// :snx postcode
 opaque type PostCode = String
 
 object PostCode:
   private val Pattern = """^(\d{4})\s*([A-Za-z]{2})$""".r
 
-  def parse(v: String): Validated[String, PostCode] = validated[String, PostCode]:
+  def parse(v: String): Validated[String, PostCode] = validateWithResult[String, PostCode]:
     val trimmed = v.trim
     demand(trimmed.nonEmpty)("zip code must not be empty")
     val m = demandDefined(Pattern.findFirstMatchIn(trimmed))("zip code must match format '1234AB'")
@@ -22,6 +23,7 @@ object PostCode:
   def fromUnsafe(v: String): PostCode = v
 
   extension (zc: PostCode) def unwrap: String = zc
+// :xns
 
 @main
 def main() =
@@ -33,8 +35,3 @@ def main() =
       case Valid(res)    => println(s"  postcode is $res")
       case Invalid(errs) => errs.toList.foreach(err => println(s"  ERROR: $err"))
   // :xns
-
-
-def patterns =
-  validateWithResult:
-

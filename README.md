@@ -25,7 +25,7 @@ opaque type PostCode = String
 object PostCode:
   private val Pattern = """^(\d{4})\s*([A-Za-z]{2})$""".r
 
-  def parse(v: String): Validated[String, PostCode] = validated[String, PostCode]:
+  def parse(v: String): Validated[String, PostCode] = validateWithResult[String, PostCode]:
     val trimmed = v.trim
     demand(trimmed.nonEmpty)("zip code must not be empty")
     val m = demandDefined(Pattern.findFirstMatchIn(trimmed))("zip code must match format '1234AB'")
@@ -53,23 +53,151 @@ def main() =
 ```
 <!-- endinclude -->
 
+## The Validation Scope
 
-## Basics
+Validation scopes are code blocks wrapped in:
 
-Two flows are possible: an accumulative flow using `ensure*`-type of functions and a
-return-early flow `demand*`-type of functions.
+```
+validate:
+  ...
+```
 
-### ensure
+or
 
-### demand
+```
+validateWithResult:
+  ...
+```
+
+`validate[E]` just does validation, returns `Valid[Unit]` on success.
+`validateWithResult[E, A]` does validation, but also returns a value of type `A`.
+
+Two modes are possible: an accumulative flow using `ensure`-type of functions and a
+short-circuiting mode using `demand`-type of functions.
+
+### Accumulating (`ensure`-type)
+
+Adds errors but continues execution.
+
+| Function                  | Returns     | Summary                                         |
+| ------------------------- | ----------- | ----------------------------------------------- |
+| `ensure(pred)(err)`       | `Unit`      | Adds error if predicate is false                |
+| `ensureFail(err)`         | `Unit`      | Always adds error                               |
+| `ensureDefined(opt)(err)` | `Option[A]` | Adds error if `None`                            |
+| `value.ensure(pred)(err)` | `value`     | Adds error if predicate is false, returns value |
+
+### Short-circuiting (`demand`-type)
+
+Adds error and aborts the validation scope.
+
+| Function                  | Returns   | Summary                                     |
+| ------------------------- | --------- | ------------------------------------------- |
+| `demand(pred)(err)`       | `Unit`    | Aborts if predicate is false                |
+| `demandFail(err)`         | `Nothing` | Always aborts                               |
+| `demandDefined(opt)(err)` | `value`   | Aborts if `None`, unwraps value             |
+| `value.demand(pred)(err)` | `value`   | Aborts if predicate is false, returns value |
 
 ## Nested validations
 
+Nested validations are handled with these functions
+
+| Function                 | Returns           | Summary                                                              |
+| ------------------------ | ----------------- | -------------------------------------------------------------------- |
+| `ensureValue(validated)` | `Option[A]`       | Adds errors from `Invalid`                                           |
+| `demandValue(validated)` | `value`           | Aborts if `Invalid`, unwraps value                                   |
+| `demandValid(validated)` | `Unit`            | Aborts if `Invalid`                                                  |
+| `attach(validated)`      | `Validated[E, A]` | Adds errors from `Invalid`, returns validated as-is. Use with `.get` |
+| `validated.get`          | `value`           | Aborts if `Invalid`, unwraps value                                   |
+
+A `ValidationScope` maintains a list of erros. If you want to add the errors of a
+separate `Validated` object, you need to "attach" it to the scope. The short-circuit
+approach with `demandValue` is clear: add the errors and exit the scope, but for error
+accumulation it is different: attach all validations and, if needed, `.get` the values.
+This means that in contrast to `demandValue`, `.get` does not add errors to the
+validation scope (unless you forgot to call `attach`, see Remarks)
+
+### Example
+
+We start easy: a country code validation. No scope, yet.
+
+<!-- include example/readme.scala::countrycode -->
+```scala
+opaque type CountryCode = String
+object CountryCode:
+  val Codes: Set[String] = Locale.getISOCountries.toSet
+  val NL: CountryCode = CountryCode.fromUnsafe("NL")
+
+  def parse(v: String): Validated[String, CountryCode] =
+    val sanitized = v.trim.toLowerCase
+    if Codes.contains(sanitized) then valid(sanitized)
+    else invalidOne(s"Country code $v is invalid")
+
+  def fromUnsafe(v: String): CountryCode = v
+
+  extension (cc: CountryCode) def unwrap: String = cc
+```
+<!-- endinclude -->
+
+The postcode is more sophisticated and accumulative, so here it makes sense to use a
+scope:
+
+<!-- include example/main.scala::postcode -->
+```scala
+opaque type PostCode = String
+
+object PostCode:
+  private val Pattern = """^(\d{4})\s*([A-Za-z]{2})$""".r
+
+  def parse(v: String): Validated[String, PostCode] = validateWithResult[String, PostCode]:
+    val trimmed = v.trim
+    demand(trimmed.nonEmpty)("zip code must not be empty")
+    val m = demandDefined(Pattern.findFirstMatchIn(trimmed))("zip code must match format '1234AB'")
+    val digits = m.group(1).toInt
+    ensure(digits >= 1000)(s"digits part must be >= 1000, got $digits")
+    val letters = m.group(2).toUpperCase
+    ensure(letters != "SA" && letters != "SD" && letters != "SS")(
+      s"letter combination '$letters' is not allowed"
+    )
+    s"$digits $letters"
+
+  def fromUnsafe(v: String): PostCode = v
+
+  extension (zc: PostCode) def unwrap: String = zc
+```
+<!-- endinclude -->
+
+To build the address we merge the country code and postcode validations into the address
+scope:
+
+<!-- include example/readme.scala::address -->
+```scala
+case class AddressRequest(
+    postCode: String,
+    countryCode: String
+)
+case class Address(
+    postCode: PostCode,
+    countryCode: CountryCode
+)
+
+def validateAddress(req: AddressRequest): Validated[String, Address] = validateWithResult:
+  val countryCode = CountryCode.parse(req.countryCode).attach()
+  val postCode = attach(PostCode.parse(req.postCode))
+
+  countryCode.foreach(cc => ensure(cc == CountryCode.NL)("wrong country"))
+
+  Address(
+    postCode = postCode.get,
+    countryCode = countryCode.get,
+  )
+```
+<!-- endinclude -->
 
 ## Remarks
 
-* The validation scope is not thread-safe.
-* Calling `.get` in a validation scope will add the errors of the validation object if not added previously.
+- The validation scope is not thread-safe.
+- Calling `.get` in a validation scope will add the errors of the validation object if
+  not added previously with `attach`.
 
 ## Build
 
@@ -81,4 +209,5 @@ sbt console   # REPL
 
 ## Release Strategy
 
-We use [Early SemVer](https://www.scala-lang.org/blog/2021/02/16/preventing-version-conflicts-with-versionscheme.html#early-semver-and-sbt-version-policy)
+We use
+[Early SemVer](https://www.scala-lang.org/blog/2021/02/16/preventing-version-conflicts-with-versionscheme.html#early-semver-and-sbt-version-policy)
