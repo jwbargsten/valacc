@@ -1,6 +1,6 @@
 package org.bargsten.valacc
 
-import cats.data.{NonEmptyList, Validated}
+import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
 import org.bargsten.valacc.syntax.*
 
@@ -8,8 +8,8 @@ case class Pokemon(id: Int, name: String, level: Int)
 
 class ValidatedSuite extends munit.FunSuite:
 
-  val validPokemon: Validated[NonEmptyList[String], Pokemon] = valid(Pokemon(25, "Pikachu", 50))
-  val invalidPokemon: Validated[NonEmptyList[String], Pokemon] = invalidOne("Pokemon fainted")
+  val validPokemon: Validated[String, Pokemon] = valid(Pokemon(25, "Pikachu", 50))
+  val invalidPokemon: Validated[String, Pokemon] = invalidOne("Pokemon fainted")
 
   // --- Valid / Invalid basics ---
 
@@ -116,7 +116,7 @@ class ValidatedSuite extends munit.FunSuite:
     assertEquals(invalidPokemon.filterOrElse(_ => true, "irrelevant"), invalidPokemon)
 
   test("mapErrors transforms errors"):
-    val inv: Validated[NonEmptyList[String], Int] = Invalid(NonEmptyList.of("low hp", "poisoned"))
+    val inv: Validated[String, Int] = Invalid(NonEmptyList.of("low hp", "poisoned"))
     val res = inv.mapErrors(_.map(_.toUpperCase))
     assertEquals(res, Invalid(NonEmptyList.of("LOW HP", "POISONED")))
 
@@ -125,11 +125,11 @@ class ValidatedSuite extends munit.FunSuite:
     assertEquals(v.mapErrors(_.map(_ => 0)), v)
 
   test("mapEachError"):
-    val inv: Validated[NonEmptyList[String], Int] = Invalid(NonEmptyList.of("aa", "bbb"))
+    val inv: Validated[String, Int] = Invalid(NonEmptyList.of("aa", "bbb"))
     assertEquals(inv.mapEachError(_.length), Invalid(NonEmptyList.of(2, 3)))
 
   test("recover on invalid"):
-    val inv: Validated[NonEmptyList[String], Pokemon] = Invalid(NonEmptyList.of("E1", "E2"))
+    val inv: Validated[String, Pokemon] = Invalid(NonEmptyList.of("E1", "E2"))
     val res = inv.recover(es => Pokemon(0, s"Recovered from ${es.size} errors", 1))
     assertEquals(res, valid(Pokemon(0, "Recovered from 2 errors", 1)))
 
@@ -139,32 +139,32 @@ class ValidatedSuite extends munit.FunSuite:
   // --- Companion ---
 
   test("unit returns valid unit"):
-    assertEquals(ValAcc.unit, Valid(()))
+    assertEquals(Validated.unit, Valid(()))
 
   test("valid wraps value"):
-    assertEquals(ValAcc.valid(42), Valid(42))
+    assertEquals(Validated.valid(42), Valid(42))
 
   test("invalidOne creates single-error invalid"):
-    assertEquals(ValAcc.invalidOne("err"), Invalid(NonEmptyList.one("err")))
+    assertEquals(Validated.invalidOne("err"), Invalid(NonEmptyList.one("err")))
 
   test("fromOption"):
-    assertEquals(ValAcc.fromOption(Some(1))("missing"), valid(1))
-    assertEquals(ValAcc.fromOption(None: Option[Int])("missing"), invalidOne("missing"))
+    assertEquals(Validated.fromOption(Some(1))("missing"), valid(1))
+    assertEquals(Validated.fromOption(None: Option[Int])("missing"), invalidOne("missing"))
 
   test("fromEither"):
-    assertEquals(ValAcc.fromEither(Right(1)), valid(1))
-    assertEquals(ValAcc.fromEither(Left("err")), invalidOne("err"))
+    assertEquals(Validated.fromEither(Right(1)), valid(1))
+    assertEquals(Validated.fromEither(Left("err")), invalidOne("err"))
 
   test("fromTry"):
-    assertEquals(ValAcc.fromTry(scala.util.Success(1)), valid(1))
+    assertEquals(Validated.fromTry(scala.util.Success(1)), valid(1))
     val ex = new RuntimeException("boom")
-    assertEquals(ValAcc.fromTry(scala.util.Failure(ex)), invalidOne(ex))
+    assertEquals(Validated.fromTry(scala.util.Failure(ex)), invalidOne(ex))
 
   test("cond returns valid when true"):
-    assertEquals(ValAcc.cond(true, 42, "err"), valid(42))
+    assertEquals(Validated.cond(true, 42, "err"), valid(42))
 
   test("cond returns invalid when false"):
-    assertEquals(ValAcc.cond(false, 42, "err"), invalidOne("err"))
+    assertEquals(Validated.cond(false, 42, "err"), invalidOne("err"))
 
   // --- sequence ---
 
@@ -173,18 +173,18 @@ class ValidatedSuite extends munit.FunSuite:
     assertEquals(list.sequence, valid(List(1, 2, 3)))
 
   test("sequence with invalids accumulates errors"):
-    val list: List[Validated[NonEmptyList[String], Int]] = List(valid(1), invalidOne("e1"), valid(3), invalidOne("e2"))
+    val list: List[Validated[String, Int]] = List(valid(1), invalidOne("e1"), valid(3), invalidOne("e2"))
     assertEquals(list.sequence, Invalid(NonEmptyList.of("e1", "e2")))
 
   test("sequence empty list"):
-    assertEquals(List.empty[Validated[NonEmptyList[String], Int]].sequence, valid(List.empty[Int]))
+    assertEquals(List.empty[Validated[String, Int]].sequence, valid(List.empty[Int]))
 
   // --- validateAll ---
 
   test("validateAll all valid returns unit"):
-    assertEquals(ValAcc.validateAll(valid(1), valid(2), ValAcc.unit), ValAcc.unit)
+    assertEquals(Validated.validateAll(valid(1), valid(2), Validated.unit), Validated.unit)
 
   test("validateAll accumulates errors"):
-    val res = ValAcc.validateAll(valid(1), invalidOne("e1"), Invalid(NonEmptyList.of("e2", "e3")))
+    val res = Validated.validateAll(valid(1), invalidOne("e1"), Invalid(NonEmptyList.of("e2", "e3")))
     assertEquals(res, Invalid(NonEmptyList.of("e1", "e2", "e3")))
 end ValidatedSuite
