@@ -41,3 +41,26 @@ def validateAddress(req: AddressRequest): Validated[String, Address] = validateW
     countryCode = countryCode.get,
   )
 // :xns
+
+// :snx request
+trait Repository:
+  def store(address: Address): Unit
+
+case class Response(status: Int, msg: String)
+
+class Routes(repo: Repository):
+  def postAddressPatternMatching(req: AddressRequest): Response =
+    validateAddress(req) match
+      case Invalid(errors) => Response(400, errors.toList.mkString("\n"))
+      case Valid(address) =>
+        repo.store(address)
+        Response(201, "Address stored")
+
+  def postAddressFold(req: AddressRequest): Response =
+    validateAddress(req).fold(
+      errors => Response(400, errors.toList.mkString("\n")),
+      address =>
+        repo.store(address)
+        Response(201, "Address stored")
+    )
+// :xns

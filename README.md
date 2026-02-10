@@ -120,7 +120,7 @@ validation scope (unless you forgot to call `attach`, see Remarks)
 
 We start easy: a country code validation. No scope, yet.
 
-<!-- include example/readme.scala::countrycode -->
+<!-- include example/FullExample.scala::countrycode -->
 ```scala
 opaque type CountryCode = String
 object CountryCode:
@@ -169,7 +169,7 @@ object PostCode:
 To build the address we merge the country code and postcode validations into the address
 scope:
 
-<!-- include example/readme.scala::address -->
+<!-- include example/FullExample.scala::address -->
 ```scala
 case class AddressRequest(
     postCode: String,
@@ -184,12 +184,40 @@ def validateAddress(req: AddressRequest): Validated[String, Address] = validateW
   val countryCode = CountryCode.parse(req.countryCode).attach()
   val postCode = attach(PostCode.parse(req.postCode))
 
+  // you can mix and match with existing ensure and demand concepts
   countryCode.foreach(cc => ensure(cc == CountryCode.NL)("wrong country"))
 
   Address(
     postCode = postCode.get,
     countryCode = countryCode.get,
   )
+```
+<!-- endinclude -->
+
+To resolve the address in your endpoint, you can use `.fold` or pattern matching
+
+<!-- include example/FullExample.scala::request -->
+```scala
+trait Repository:
+  def store(address: Address): Unit
+
+case class Response(status: Int, msg: String)
+
+class Routes(repo: Repository):
+  def postAddressPatternMatching(req: AddressRequest): Response =
+    validateAddress(req) match
+      case Invalid(errors) => Response(400, errors.toList.mkString("\n"))
+      case Valid(address) =>
+        repo.store(address)
+        Response(201, "Address stored")
+
+  def postAddressFold(req: AddressRequest): Response =
+    validateAddress(req).fold(
+      errors => Response(400, errors.toList.mkString("\n")),
+      address =>
+        repo.store(address)
+        Response(201, "Address stored")
+    )
 ```
 <!-- endinclude -->
 
