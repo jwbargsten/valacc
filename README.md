@@ -1,6 +1,12 @@
-# valacc
+# valacc - Scala 3 accumulative error validation
 
-Scala 3 accumulative validation lib
+This library is heavily based on [Cats' validated](https://typelevel.org/cats/datatypes/validated.html), meaning that
+
+`Validated` is an alias for the `Validated` from Cats
+
+```scala
+type Validated[+E, +A] = cats.data.Validated[NonEmptyList[E], A]
+```
 
 ## Installation
 
@@ -53,7 +59,6 @@ def main() =
 ```
 <!-- endinclude -->
 
-**NOTE**: `Validated` is an alias for the `Validated` from Cats: `type Validated[+E, +A] = cats.data.Validated[NonEmptyList[E], A]`
 
 ## The Validation Scope
 
