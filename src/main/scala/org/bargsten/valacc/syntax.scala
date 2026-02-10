@@ -36,3 +36,4 @@ object syntax:
 
   export ValAcc.*
   export ValidationScope.*
+  export Validated.{Valid, Invalid}
