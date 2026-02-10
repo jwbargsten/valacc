@@ -33,3 +33,8 @@ def main() =
       case Valid(res)    => println(s"  postcode is $res")
       case Invalid(errs) => errs.toList.foreach(err => println(s"  ERROR: $err"))
   // :xns
+
+
+def patterns =
+  validateWithResult:
+

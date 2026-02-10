@@ -53,6 +53,24 @@ def main() =
 ```
 <!-- endinclude -->
 
+
+## Basics
+
+Two flows are possible: an accumulative flow using `ensure*`-type of functions and a
+return-early flow `demand*`-type of functions.
+
+### ensure
+
+### demand
+
+## Nested validations
+
+
+## Remarks
+
+* The validation scope is not thread-safe.
+* Calling `.get` in a validation scope will add the errors of the validation object if not added previously.
+
 ## Build
 
 ```bash
