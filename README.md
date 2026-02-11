@@ -1,5 +1,7 @@
 # valacc - Scala 3 accumulative error validation
 
+[![CircleCI](https://dl.circleci.com/status-badge/img/circleci/QQzkFFSiDPVRqK627egyce/2ouSeafPmRYk5f96i48dte/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/QQzkFFSiDPVRqK627egyce/2ouSeafPmRYk5f96i48dte/tree/main)
+
 This library is heavily based on [Cats' validated](https://typelevel.org/cats/datatypes/validated.html), meaning that
 
 `Validated` is an alias for the `Validated` from Cats
