@@ -1,4 +1,4 @@
-.PHONY: snippets fmt clean build dist upload
+.PHONY: snippets fmt clean build dist upload run-example
 
 fmt:
 	sbt scalafmtAll
@@ -13,7 +13,7 @@ build:
 test:
 	sbt test
 
-dist: clean build test snippets 
+dist: clean build test snippets run-example
 	publish-sbt-sonatype publishSigned
 
 local: dist
