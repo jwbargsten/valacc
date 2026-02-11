@@ -1,0 +1,45 @@
+version: 2.1
+
+jobs:
+  test:
+    docker:
+      - image: cimg/openjdk:17.0.10
+    environment:
+      SBT_VERSION: "1.12.2"
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - sbt-tool-{{ arch }}-{{ checksum "project/build.properties" }}
+            - sbt-tool-{{ arch }}-
+      - run:
+          name: Install sbt
+          command: |
+            if [ ! -f ~/sbt/bin/sbt ]; then
+              curl -fL "https://github.com/sbt/sbt/releases/download/v${SBT_VERSION}/sbt-${SBT_VERSION}.zip" -o /tmp/sbt.zip
+              unzip -qo /tmp/sbt.zip -d ~
+              rm /tmp/sbt.zip
+            fi
+            echo 'export PATH=~/sbt/bin:$PATH' >> "$BASH_ENV"
+      - save_cache:
+          key: sbt-tool-{{ arch }}-{{ checksum "project/build.properties" }}
+          paths:
+            - ~/sbt
+      - restore_cache:
+          keys:
+            - sbt-deps-{{ checksum "build.sbt" }}
+            - sbt-deps-
+      - run:
+          name: build_and_test
+          command: sbt clean compile scalafmtCheckAll scalafmtSbtCheck test
+      - save_cache:
+          key: sbt-deps-{{ checksum "build.sbt" }}
+          paths:
+            - ~/.sbt
+            - ~/.cache/coursier
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
