@@ -1,4 +1,4 @@
-val scalacVersion = "3.8.1"
+val scalacVersion = "3.3.7"
 ThisBuild / organization := "org.bargsten"
 ThisBuild / organizationName := "Joachim Bargsten"
 ThisBuild / organizationHomepage := Some(url("https://bargsten.org/"))
@@ -33,7 +33,7 @@ lazy val root = project
   .in(file("."))
   .settings(
     name := "valacc",
-    version := "0.3.0",
+    version := "0.3.1",
     scalaVersion := scalacVersion,
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "2.13.0",

@@ -13,18 +13,18 @@ build:
 test:
 	sbt test
 
-dist: clean build test snippets run-example
+dist: clean build test snippets
 	publish-sbt-sonatype publishSigned
 
-local: dist
+publish-local: dist
 	sbt publishLocal
 
-upload: dist
+publish: dist run-example
 	publish-sbt-sonatype sonaUpload
 
 snippets:
 	sbt updateVersionInDocs
 	./script/update_snippets.py .
 
-run-example:
+run-example: publish-local
 	cd example && scala-cli run .

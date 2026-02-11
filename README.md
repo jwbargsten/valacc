@@ -13,9 +13,9 @@ type Validated[+E, +A] = cats.data.Validated[NonEmptyChain[E], A]
 <!-- include example/project.scala::dependencies -->
 ```scala
 // Scala CLI
-//> using dep org.bargsten::valacc:0.3.0
+//> using dep org.bargsten::valacc:0.3.1
 // sbt
-// "org.bargsten" %% "valacc" % "0.3.0"
+// "org.bargsten" %% "valacc" % "0.3.1"
 ```
 <!-- endinclude -->
 
