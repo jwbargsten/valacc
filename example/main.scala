@@ -1,6 +1,7 @@
 // :snx example
 import org.bargsten.valacc.*
 import org.bargsten.valacc.syntax.*
+import cats.syntax.foldable.*
 
 // :snx postcode
 opaque type PostCode = String

@@ -1,6 +1,6 @@
 package org.bargsten.valacc
 
-import cats.data.NonEmptyList
+import cats.data.NonEmptyChain
 import org.bargsten.valacc.{Validated, ValidationScope}
 
 object syntax:

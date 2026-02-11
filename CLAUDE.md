@@ -15,11 +15,11 @@ sbt "testOnly org.bargsten.valacc.ValidatedSuite -- *zip*"  # run tests matching
 
 ## Architecture
 
-valacc is a validation library providing error accumulation with optional short-circuiting. Single package `org.bargsten.valacc`, single dependency: cats-core (for `NonEmptyList`).
+valacc is a validation library providing error accumulation with optional short-circuiting. Single package `org.bargsten.valacc`, single dependency: cats-core (for `NonEmptyChain`).
 
 ### Core types (`Validated.scala`)
 
-`Validated[+E, +A]` — sealed trait with two cases: `Valid[A]` and `Invalid[E]` (wraps `NonEmptyList[E]`). Provides `map`, `flatMap`, `zip` (accumulates errors from both sides), `fold`, conversions (`toOption`, `toEither`), and `sequence` on `List[Validated]`. `flatMap` short-circuits; `zip` accumulates.
+`Validated[+E, +A]` — sealed trait with two cases: `Valid[A]` and `Invalid[E]` (wraps `NonEmptyChain[E]`). Provides `map`, `flatMap`, `zip` (accumulates errors from both sides), `fold`, conversions (`toOption`, `toEither`), and `sequence` on `List[Validated]`. `flatMap` short-circuits; `zip` accumulates.
 
 ### Scoped validation DSL (`ValidationScope.scala`)
 

@@ -33,7 +33,7 @@ lazy val root = project
   .in(file("."))
   .settings(
     name         := "valacc",
-    version      := "0.2.0",
+    version      := "0.3.0",
     scalaVersion := scalacVersion,
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "2.13.0",

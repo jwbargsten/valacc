@@ -1,6 +1,6 @@
 package org.bargsten.valacc
 
-import cats.data.NonEmptyList
+import cats.data.NonEmptyChain
 import org.bargsten.valacc.syntax.*
 
 class ValidationScopeSuite extends munit.FunSuite:
@@ -21,7 +21,7 @@ class ValidationScopeSuite extends munit.FunSuite:
       attach(v)
       demandValue(v)
     }
-    assertEquals(result, invalid(NonEmptyList("bad", List("bad"))))
+    assertEquals(result, invalid(NonEmptyChain("bad", "bad")))
 
   test("ensure with false adds no duplicate errors (get)"):
     val result = validate[String] {
@@ -36,7 +36,7 @@ class ValidationScopeSuite extends munit.FunSuite:
       ensure(false) { "e1" }
       ensure(true) { "skip" }
       ensure(false) { "e2" }
-    assertEquals(result, Invalid(NonEmptyList.of("e1", "e2")))
+    assertEquals(result, Invalid(NonEmptyChain.of("e1", "e2")))
 
   test("ensureFail always adds error"):
     val result = validate[String] { ensureFail { "always" } }
@@ -72,7 +72,7 @@ class ValidationScopeSuite extends munit.FunSuite:
     val result = validate[String]:
       ensure(false) { "e-ensure" }
       demand(false) { "e-demand" }
-    assertEquals(result, Invalid(NonEmptyList.of("e-ensure", "e-demand")))
+    assertEquals(result, Invalid(NonEmptyChain.of("e-ensure", "e-demand")))
 
   // --- ensureDefined / demandDefined ---
 
@@ -109,8 +109,8 @@ class ValidationScopeSuite extends munit.FunSuite:
 
   test("ensureValue with invalid adds errors, returns None"):
     val result = validateWithResult[String, Option[Int]]:
-      ensureValue(Invalid(NonEmptyList.of("e1", "e2")))
-    assertEquals(result, Invalid(NonEmptyList.of("e1", "e2")))
+      ensureValue(Invalid(NonEmptyChain.of("e1", "e2")))
+    assertEquals(result, Invalid(NonEmptyChain.of("e1", "e2")))
 
   test("demandValue with valid returns value"):
     val result = validateWithResult[String, Int]:
@@ -224,7 +224,7 @@ class ValidationScopeSuite extends munit.FunSuite:
       ensure(false) { "e1" }
       ensure(false) { "e2" }
       42
-    assertEquals(result, Invalid(NonEmptyList.of("e1", "e2")))
+    assertEquals(result, Invalid(NonEmptyChain.of("e1", "e2")))
 
   test("validated short-circuits on demand failure with accumulated errors"):
     val result = validateWithResult[String, Int]:
@@ -232,12 +232,12 @@ class ValidationScopeSuite extends munit.FunSuite:
       demand(false) { "stops here" }
       ensure(false) { "never reached" }
       42
-    assertEquals(result, Invalid(NonEmptyList.of("first", "stops here")))
+    assertEquals(result, Invalid(NonEmptyChain.of("first", "stops here")))
 
   test("full workflow: ensure + attach + get"):
     val result = validateWithResult[String, Int]:
       ensure(false) { "e1" }
-      val other = attach(Invalid(NonEmptyList.of("e2", "e3")))
+      val other = attach(Invalid(NonEmptyChain.of("e2", "e3")))
       other.get
-    assertEquals(result, Invalid(NonEmptyList.of("e1", "e2", "e3")))
+    assertEquals(result, Invalid(NonEmptyChain.of("e1", "e2", "e3")))
 end ValidationScopeSuite

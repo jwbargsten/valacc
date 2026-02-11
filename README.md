@@ -5,7 +5,7 @@ This library is heavily based on [Cats' validated](https://typelevel.org/cats/da
 `Validated` is an alias for the `Validated` from Cats
 
 ```scala
-type Validated[+E, +A] = cats.data.Validated[NonEmptyList[E], A]
+type Validated[+E, +A] = cats.data.Validated[NonEmptyChain[E], A]
 ```
 
 ## Installation
@@ -233,7 +233,7 @@ class Routes(repo: Repository):
 - The validation scope is not thread-safe.
 - Calling `.get` in a validation scope will add the errors of the validation object if
   not added previously with `attach`.
-- `Validated` is an alias for the `Validated` from Cats: `type Validated[+E, +A] = cats.data.Validated[NonEmptyList[E], A]`
+- `Validated` is an alias for the `Validated` from Cats: `type Validated[+E, +A] = cats.data.Validated[NonEmptyChain[E], A]`
 
 ## Build
 

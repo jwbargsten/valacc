@@ -1,5 +1,6 @@
 package org.bargsten.valacc
 
+import cats.data.NonEmptyChain
 import cats.data.Validated.Valid
 
 import scala.util.{Failure, Success, Try}

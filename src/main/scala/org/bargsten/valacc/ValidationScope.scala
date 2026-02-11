@@ -1,7 +1,7 @@
 package org.bargsten.valacc
 
 import cats.data.Validated.{Invalid, Valid}
-import cats.data.{NonEmptyList, Validated}
+import cats.data.{NonEmptyChain, Validated}
 
 import scala.annotation.targetName
 import scala.collection.mutable.ListBuffer
@@ -13,7 +13,7 @@ class ValidationScope[E]:
   private val _errors = ListBuffer.empty[E]
   private val abort = ValidationException()
 
-  def errors: Option[NonEmptyList[E]] = NonEmptyList.fromList(_errors.toList)
+  def errors: Option[NonEmptyChain[E]] = NonEmptyChain.fromSeq(_errors.toList)
 
   private[valacc] def shortcircuit(): Nothing = throw abort
   private[valacc] def isOurException(t: Throwable): Boolean = t eq abort
@@ -31,14 +31,14 @@ class ValidationScope[E]:
       case some @ Some(_) => some
       case None           => _errors += error; None
 
-  def ensureValue[A](validated: Validated[NonEmptyList[E], A]): Option[A] =
+  def ensureValue[A](validated: Validated[NonEmptyChain[E], A]): Option[A] =
     validated match
       case Valid(a)        => Some(a)
-      case Invalid(errors) => _errors ++= errors.toList; None
+      case Invalid(errors) => _errors ++= errors.iterator; None
 
-  def attach[A](validated: Validated[NonEmptyList[E], A]): Validated[NonEmptyList[E], A] =
+  def attach[A](validated: Validated[NonEmptyChain[E], A]): Validated[NonEmptyChain[E], A] =
     validated match
-      case inv @ Invalid(errors) => _errors ++= errors.toList; inv
+      case inv @ Invalid(errors) => _errors ++= errors.iterator; inv
       case v                     => v
 
   // --- short-circuiting ---
@@ -57,30 +57,30 @@ class ValidationScope[E]:
       case Some(a) => a
       case None    => _errors += error; shortcircuit()
 
-  def demandValue[A](validated: Validated[NonEmptyList[E], A]): A =
+  def demandValue[A](validated: Validated[NonEmptyChain[E], A]): A =
     validated match
       case Valid(a) => a
       case Invalid(errors) =>
-        _errors ++= errors.toList
+        _errors ++= errors.iterator
         shortcircuit()
 
-  def demandValid(validated: Validated[NonEmptyList[E], ?]): Unit =
+  def demandValid(validated: Validated[NonEmptyChain[E], ?]): Unit =
     validated match
       case Valid(_) => ()
       case Invalid(errors) =>
-        _errors ++= errors.toList
+        _errors ++= errors.iterator
         shortcircuit()
 
   // --- extensions available via given scope ---
 
-  private def addMissingErrors(xs: NonEmptyList[E]) =
-    if _errors.isEmpty then _errors ++= xs.toList
+  private def addMissingErrors(xs: NonEmptyChain[E]) =
+    if _errors.isEmpty then _errors ++= xs.iterator
     else
       val seen = new java.util.IdentityHashMap[E, Boolean]()
       _errors.foreach(e => seen.put(e, true))
-      _errors ++= xs.filter(x => !seen.containsKey(x))
+      _errors ++= xs.filter(x => !seen.containsKey(x)).iterator
 
-  extension [A](validated: Validated[NonEmptyList[E], A])
+  extension [A](validated: Validated[NonEmptyChain[E], A])
     def get: A = validated match
       case Valid(a) => a
       case Invalid(errors) =>
@@ -88,7 +88,7 @@ class ValidationScope[E]:
         shortcircuit()
 
     @targetName("attachFluent")
-    def attach(): Validated[NonEmptyList[E], A] = this.attach(validated)
+    def attach(): Validated[NonEmptyChain[E], A] = this.attach(validated)
 
   extension [A](value: A)
     def ensure(predicate: A => Boolean)(error: => E): A =
@@ -103,7 +103,7 @@ class ValidationScope[E]:
 end ValidationScope
 
 object ValidationScope:
-  def validate[E](block: ValidationScope[E] ?=> Unit): Validated[NonEmptyList[E], Unit] =
+  def validate[E](block: ValidationScope[E] ?=> Unit): Validated[NonEmptyChain[E], Unit] =
     val scope = new ValidationScope[E]
     try
       block(using scope)
@@ -116,7 +116,7 @@ object ValidationScope:
           case Some(errs) => Invalid(errs)
           case None       => throw AssertionError("assertion failed: caught ValidationException, but no errors")
 
-  def validateWithResult[E, A](block: ValidationScope[E] ?=> A): Validated[NonEmptyList[E], A] =
+  def validateWithResult[E, A](block: ValidationScope[E] ?=> A): Validated[NonEmptyChain[E], A] =
     val scope = new ValidationScope[E]
     try
       val result = block(using scope)
