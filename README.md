@@ -13,9 +13,9 @@ type Validated[+E, +A] = cats.data.Validated[NonEmptyChain[E], A]
 <!-- include example/project.scala::dependencies -->
 ```scala
 // Scala CLI
-//> using dep org.bargsten::valacc:0.2.0
+//> using dep org.bargsten::valacc:0.3.0
 // sbt
-// "org.bargsten" %% "valacc" % "0.2.0"
+// "org.bargsten" %% "valacc" % "0.3.0"
 ```
 <!-- endinclude -->
 
@@ -25,6 +25,7 @@ type Validated[+E, +A] = cats.data.Validated[NonEmptyChain[E], A]
 ```scala
 import org.bargsten.valacc.*
 import org.bargsten.valacc.syntax.*
+import cats.syntax.foldable.*
 
 opaque type PostCode = String
 
