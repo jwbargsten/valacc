@@ -30,6 +30,9 @@ jobs:
             - sbt-deps-{{ checksum "build.sbt" }}
             - sbt-deps-
       - run:
+          name: Compile
+          command: sbt compile
+      - run:
           name: Run tests
           command: sbt test
       - save_cache:
