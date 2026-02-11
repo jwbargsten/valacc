@@ -30,18 +30,13 @@ jobs:
             - sbt-deps-{{ checksum "build.sbt" }}
             - sbt-deps-
       - run:
-          name: Compile
-          command: sbt compile
-      - run:
-          name: Run tests
-          command: sbt test
+          name: build_and_test
+          command: sbt clean compile scalafmtCheckAll scalafmtSbtCheck test
       - save_cache:
           key: sbt-deps-{{ checksum "build.sbt" }}
           paths:
             - ~/.sbt
             - ~/.cache/coursier
-      - store_test_results:
-          path: target/test-reports
 
 workflows:
   version: 2
