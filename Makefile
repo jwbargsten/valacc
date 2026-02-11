@@ -18,10 +18,12 @@ dist: clean build test snippets
 
 local: dist
 	sbt publishLocal
+
 upload: dist
 	publish-sbt-sonatype sonaUpload
 
 snippets:
+	sbt updateVersionInDocs
 	./script/update_snippets.py .
 
 run-example:
