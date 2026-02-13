@@ -1,45 +1,50 @@
 version: 2.1
 
 jobs:
-  test:
+  build-test:
     docker:
       - image: cimg/openjdk:17.0.10
+    working_directory: ~/project
     environment:
-      SBT_VERSION: "1.12.2"
+      JAVA_OPTS: "-Xmx2g -XX:+UseG1GC"
+      SBT_OPTS: "-Dsbt.ci=true"
     steps:
       - checkout
       - restore_cache:
+          name: Restore Coursier binary
           keys:
-            - sbt-tool-{{ arch }}-{{ checksum "project/build.properties" }}
-            - sbt-tool-{{ arch }}-
+            - coursier-bin-v1
+      - restore_cache:
+          name: Restore sbt dependencies
+          keys:
+            - sbt-deps-v1-{{ checksum "build.sbt" }}-{{ checksum "project/plugins.sbt" }}-{{ checksum "project/build.properties" }}
+            - sbt-deps-v1-
       - run:
           name: Install sbt
           command: |
-            if [ ! -f ~/sbt/bin/sbt ]; then
-              curl -fL "https://github.com/sbt/sbt/releases/download/v${SBT_VERSION}/sbt-${SBT_VERSION}.zip" -o /tmp/sbt.zip
-              unzip -qo /tmp/sbt.zip -d ~
-              rm /tmp/sbt.zip
+            if [ ! -f ~/cs ]; then
+              curl -fL "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" | gzip -d > ~/cs
+              chmod +x ~/cs
             fi
-            echo 'export PATH=~/sbt/bin:$PATH' >> "$BASH_ENV"
+            ~/cs setup --yes --apps sbt
+            echo 'export PATH="$HOME/.local/share/coursier/bin:$PATH"' >> "$BASH_ENV"
       - save_cache:
-          key: sbt-tool-{{ arch }}-{{ checksum "project/build.properties" }}
+          name: Cache Coursier binary
+          key: coursier-bin-v1
           paths:
-            - ~/sbt
-      - restore_cache:
-          keys:
-            - sbt-deps-{{ checksum "build.sbt" }}
-            - sbt-deps-
+            - ~/cs
       - run:
-          name: build_and_test
-          command: sbt clean compile scalafmtCheckAll scalafmtSbtCheck test
+          name: Run linting and tests
+          command: sbt scalafmtCheckAll scalafmtSbtCheck test
       - save_cache:
-          key: sbt-deps-{{ checksum "build.sbt" }}
+          name: Cache sbt dependencies
+          key: sbt-deps-v1-{{ checksum "build.sbt" }}-{{ checksum "project/plugins.sbt" }}-{{ checksum "project/build.properties" }}
           paths:
             - ~/.sbt
             - ~/.cache/coursier
+            - ~/.local/share/coursier
 
 workflows:
-  version: 2
-  test:
+  build-test:
     jobs:
-      - test
+      - build-test
