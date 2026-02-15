@@ -21,7 +21,7 @@ object PostCode:
     )
     s"$digits $letters"
 
-  def fromUnsafe(v: String): PostCode = v
+  def unsafeFrom(v: String): PostCode = v
 
   extension (zc: PostCode) def unwrap: String = zc
 // :xns
