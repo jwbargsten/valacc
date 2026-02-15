@@ -46,7 +46,7 @@ object PostCode:
     )
     s"$digits $letters"
 
-  def fromUnsafe(v: String): PostCode = v
+  def unsafeFrom(v: String): PostCode = v
 
   extension (zc: PostCode) def unwrap: String = zc
 
@@ -135,14 +135,14 @@ We start easy: a country code validation. No scope, yet.
 opaque type CountryCode = String
 object CountryCode:
   val Codes: Set[String] = Locale.getISOCountries.toSet
-  val NL: CountryCode = CountryCode.fromUnsafe("NL")
+  val NL: CountryCode = CountryCode.unsafeFrom("NL")
 
   def parse(v: String): Validated[String, CountryCode] =
     val sanitized = v.trim.toUpperCase
     if Codes.contains(sanitized) then valid(sanitized)
     else invalidOne(s"Country code $v is invalid")
 
-  def fromUnsafe(v: String): CountryCode = v
+  def unsafeFrom(v: String): CountryCode = v
 
   extension (cc: CountryCode) def unwrap: String = cc
 ```
@@ -170,7 +170,7 @@ object PostCode:
     )
     s"$digits $letters"
 
-  def fromUnsafe(v: String): PostCode = v
+  def unsafeFrom(v: String): PostCode = v
 
   extension (zc: PostCode) def unwrap: String = zc
 ```
